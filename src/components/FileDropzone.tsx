@@ -1,7 +1,8 @@
 
 import React, { useState, useCallback } from 'react';
 import { Upload, FileText, X } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import LoadingIndicator from './LoadingIndicator';
 
 interface FileWithPreview extends File {
   preview?: string;
@@ -10,6 +11,8 @@ interface FileWithPreview extends File {
 const FileDropzone = () => {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
 
   const onDragEnter = useCallback((e: React.DragEvent) => {
@@ -78,14 +81,60 @@ const FileDropzone = () => {
       return;
     }
 
+    // Mostrar o indicador de carregamento
+    setIsProcessing(true);
+    setProgress(0);
+    
     toast({
       title: "Processando arquivos",
       description: `Processando ${files.length} arquivo(s)...`,
     });
     
-    // Aqui seria implementada a lógica real de processamento
+    // Simulação de processamento com progresso
+    const totalFiles = files.length;
+    let processedFiles = 0;
+    
+    // Simulação de processamento de arquivos com intervalos
+    const processInterval = setInterval(() => {
+      processedFiles += 1;
+      const newProgress = Math.round((processedFiles / totalFiles) * 100);
+      setProgress(newProgress);
+      
+      // Quando todos os arquivos forem processados
+      if (processedFiles >= totalFiles) {
+        clearInterval(processInterval);
+        
+        // Adicionar um pequeno atraso antes de concluir para mostrar 100%
+        setTimeout(() => {
+          setIsProcessing(false);
+          setProgress(0);
+          setFiles([]);
+          
+          toast({
+            title: "Processamento concluído",
+            description: `${totalFiles} arquivo(s) processado(s) com sucesso.`
+          });
+        }, 500);
+      }
+    }, 1000); // Processa um arquivo a cada segundo (simulação)
+    
+    // Em um cenário real, aqui seria implementada a lógica real de processamento
     console.log("Arquivos para processar:", files);
   };
+
+  // Renderização condicional baseada no estado de processamento
+  if (isProcessing) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="border rounded-lg p-8 bg-white shadow-sm">
+          <LoadingIndicator 
+            message={`Processando ${files.length} arquivo(s)...`} 
+            progress={progress} 
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">

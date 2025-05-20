@@ -1,8 +1,11 @@
+
 import React, { useState, useCallback } from 'react';
-import { Upload, FileText, X, Image, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import LoadingIndicator from './LoadingIndicator';
-import { Button } from './ui/button';
+import LoadingIndicator from '../LoadingIndicator';
+import DropArea from './DropArea';
+import FileList from './FileList';
+import ImagePreview from './ImagePreview';
+import { Button } from '../ui/button';
 
 interface FileWithPreview extends File {
   preview?: string;
@@ -48,7 +51,6 @@ const FileDropzone = () => {
   };
 
   const handleFiles = (newFiles: FileWithPreview[]) => {
-    // Adicionar novos arquivos à lista
     setFiles(prevFiles => {
       const updatedFiles = [...prevFiles, ...newFiles];
       toast({
@@ -150,38 +152,11 @@ const FileDropzone = () => {
   // Renderização para imagem processada
   if (processedImage) {
     return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="border rounded-lg p-8 bg-white shadow-sm">
-          <div className="flex flex-col items-center">
-            <h3 className="text-xl font-semibold text-gray-700 mb-4">Documento processado</h3>
-            
-            <div className="mb-6 border shadow-sm rounded-md overflow-hidden">
-              <img 
-                src={processedImage} 
-                alt="PDF processado" 
-                className="max-w-full h-auto" 
-              />
-            </div>
-            
-            <div className="flex gap-4">
-              <Button 
-                onClick={downloadImage}
-                className="bg-ilovepdf-blue hover:bg-ilovepdf-darkblue"
-              >
-                <Download size={18} className="mr-2" />
-                Baixar imagem
-              </Button>
-              
-              <Button 
-                onClick={resetProcess}
-                variant="outline"
-              >
-                Processar novos arquivos
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ImagePreview
+        imageUrl={processedImage}
+        downloadImage={downloadImage}
+        resetProcess={resetProcess}
+      />
     );
   }
 
@@ -201,98 +176,31 @@ const FileDropzone = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <div 
-        className={`border-2 border-dashed rounded-lg p-8 ${
-          isDragging 
-            ? 'border-ilovepdf-blue bg-ilovepdf-lightblue' 
-            : 'border-gray-300 bg-white hover:bg-gray-50'
-        } transition-colors duration-200 cursor-pointer`}
+      <DropArea
+        isDragging={isDragging}
         onDragEnter={onDragEnter}
         onDragLeave={onDragLeave}
         onDragOver={onDragOver}
         onDrop={onDrop}
-        onClick={() => document.getElementById('fileInput')?.click()}
-      >
-        <div className="flex flex-col items-center justify-center py-10">
-          {isDragging ? (
-            <div className="animate-pulse-scale text-ilovepdf-blue">
-              <Upload size={64} strokeWidth={1.5} />
-            </div>
-          ) : (
-            <div className="text-gray-400">
-              <Upload size={64} strokeWidth={1.5} />
-            </div>
-          )}
-          
-          <h3 className="mt-4 text-xl font-medium text-gray-700">
-            Arraste seus arquivos aqui
-          </h3>
-          <p className="mt-2 text-sm text-gray-500 text-center">
-            ou clique para selecionar arquivos do seu computador
-          </p>
-          
-          <input 
-            id="fileInput" 
-            type="file" 
-            multiple 
-            className="hidden" 
-            onChange={handleFileInput} 
-          />
-          
-          <button
-            className="mt-6 px-6 py-2 bg-ilovepdf-blue hover:bg-ilovepdf-darkblue text-white rounded-md transition-colors duration-200"
+        handleFileInput={handleFileInput}
+      />
+      
+      <FileList
+        files={files}
+        removeFile={removeFile}
+      />
+      
+      {files.length > 0 && (
+        <div className="mt-6 flex justify-center">
+          <Button
             onClick={(e) => {
               e.stopPropagation();
-              document.getElementById('fileInput')?.click();
+              processFiles();
             }}
+            className="px-8 py-3 bg-ilovepdf-blue hover:bg-ilovepdf-darkblue text-white"
           >
-            Selecionar arquivos
-          </button>
-        </div>
-      </div>
-
-      {files.length > 0 && (
-        <div className="mt-8">
-          <h3 className="text-lg font-medium text-gray-700 mb-4">Arquivos selecionados</h3>
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <ul className="divide-y divide-gray-200">
-              {files.map((file, index) => (
-                <li key={index} className="flex items-center justify-between py-3 px-4 hover:bg-gray-50">
-                  <div className="flex items-center">
-                    <FileText className="h-6 w-6 text-ilovepdf-blue mr-3" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{file.name}</p>
-                      <p className="text-xs text-gray-500">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFile(index);
-                    }}
-                    className="text-gray-400 hover:text-ilovepdf-red p-1 rounded-full hover:bg-gray-100"
-                  >
-                    <X size={18} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-          
-          <div className="mt-6 flex justify-center">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                processFiles();
-              }}
-              className="px-8 py-3 bg-ilovepdf-blue hover:bg-ilovepdf-darkblue text-white rounded-md font-medium transition-colors duration-200"
-            >
-              Processar arquivos
-            </button>
-          </div>
+            Processar arquivos
+          </Button>
         </div>
       )}
     </div>

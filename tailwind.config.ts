@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,13 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				ilovepdf: {
+					blue: '#0862fe',
+					lightblue: '#e7f0ff',
+					darkblue: '#054db9',
+					red: '#e74c3c',
+					gray: '#f2f2f2'
 				}
 			},
 			borderRadius: {
@@ -84,11 +92,22 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-scale': {
+					'0%, 100%': {
+						transform: 'scale(1)',
+						opacity: '0.75'
+					},
+					'50%': {
+						transform: 'scale(1.05)',
+						opacity: '1'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-scale': 'pulse-scale 2s ease-in-out infinite'
 			}
 		}
 	},

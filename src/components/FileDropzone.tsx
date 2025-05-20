@@ -1,8 +1,8 @@
-
 import React, { useState, useCallback } from 'react';
-import { Upload, FileText, X } from 'lucide-react';
+import { Upload, FileText, X, Image, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import LoadingIndicator from './LoadingIndicator';
+import { Button } from './ui/button';
 
 interface FileWithPreview extends File {
   preview?: string;
@@ -13,6 +13,7 @@ const FileDropzone = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [processedImage, setProcessedImage] = useState<string | null>(null);
   const { toast } = useToast();
 
   const onDragEnter = useCallback((e: React.DragEvent) => {
@@ -71,6 +72,28 @@ const FileDropzone = () => {
     });
   };
 
+  const resetProcess = () => {
+    setProcessedImage(null);
+    setFiles([]);
+  };
+
+  const downloadImage = () => {
+    if (!processedImage) return;
+    
+    // Criar um link de download para a imagem
+    const link = document.createElement('a');
+    link.href = processedImage;
+    link.download = 'documento-processado.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Download iniciado",
+      description: "O download da imagem foi iniciado com sucesso."
+    });
+  };
+
   const processFiles = () => {
     if (files.length === 0) {
       toast({
@@ -84,6 +107,7 @@ const FileDropzone = () => {
     // Mostrar o indicador de carregamento
     setIsProcessing(true);
     setProgress(0);
+    setProcessedImage(null);
     
     toast({
       title: "Processando arquivos",
@@ -107,8 +131,9 @@ const FileDropzone = () => {
         // Adicionar um pequeno atraso antes de concluir para mostrar 100%
         setTimeout(() => {
           setIsProcessing(false);
-          setProgress(0);
-          setFiles([]);
+          
+          // Simulação de imagem processada (usando uma imagem placeholder)
+          setProcessedImage('https://via.placeholder.com/600x800.png?text=PDF+Processado');
           
           toast({
             title: "Processamento concluído",
@@ -121,6 +146,44 @@ const FileDropzone = () => {
     // Em um cenário real, aqui seria implementada a lógica real de processamento
     console.log("Arquivos para processar:", files);
   };
+
+  // Renderização para imagem processada
+  if (processedImage) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="border rounded-lg p-8 bg-white shadow-sm">
+          <div className="flex flex-col items-center">
+            <h3 className="text-xl font-semibold text-gray-700 mb-4">Documento processado</h3>
+            
+            <div className="mb-6 border shadow-sm rounded-md overflow-hidden">
+              <img 
+                src={processedImage} 
+                alt="PDF processado" 
+                className="max-w-full h-auto" 
+              />
+            </div>
+            
+            <div className="flex gap-4">
+              <Button 
+                onClick={downloadImage}
+                className="bg-ilovepdf-blue hover:bg-ilovepdf-darkblue"
+              >
+                <Download size={18} className="mr-2" />
+                Baixar imagem
+              </Button>
+              
+              <Button 
+                onClick={resetProcess}
+                variant="outline"
+              >
+                Processar novos arquivos
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Renderização condicional baseada no estado de processamento
   if (isProcessing) {

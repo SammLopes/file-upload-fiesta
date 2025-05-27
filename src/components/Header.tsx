@@ -1,5 +1,12 @@
 
 import React from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import { ChevronDown } from 'lucide-react';
 
 const Header = () => {
   return (
@@ -12,9 +19,23 @@ const Header = () => {
           </span>
         </div>
         <nav className="hidden md:flex">
-          <ul className="flex space-x-6">
+          <ul className="flex space-x-6 items-center">
             <li><a href="#" className="text-white hover:text-ilovepdf-lightblue transition-colors">Início</a></li>
-            <li><a href="#" className="text-white hover:text-ilovepdf-lightblue transition-colors">Ferramentas</a></li>
+            <li>
+              <DropdownMenu>
+                <DropdownMenuTrigger className="text-white hover:text-ilovepdf-lightblue transition-colors flex items-center gap-1">
+                  Ferramentas
+                  <ChevronDown size={16} />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-white border border-gray-200 shadow-lg z-50">
+                  <DropdownMenuItem>
+                    <a href="/" className="w-full text-gray-700 hover:text-ilovepdf-blue">
+                      Predição de avc
+                    </a>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </li>
             <li><a href="#" className="text-white hover:text-ilovepdf-lightblue transition-colors">Sobre</a></li>
           </ul>
         </nav>

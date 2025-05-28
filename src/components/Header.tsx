@@ -19,7 +19,7 @@ const Header = () => {
           </span>
         </div>
         <nav className="hidden md:flex">
-          <ul className="flex space-x-6">
+          <ul className="flex space-x-6 items-center">
             <li><a href="#" className="text-white hover:text-ilovepdf-lightblue transition-colors">Início</a></li>
             <li>
               <DropdownMenu>

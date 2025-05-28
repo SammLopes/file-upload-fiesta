@@ -11,9 +11,9 @@ const Index = () => {
       <main className="flex-1 py-8">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-800">Manipule seus arquivos PDF</h2>
+            <h2 className="text-3xl font-bold text-gray-800">Envie seu exame de AVC aqui</h2>
             <p className="mt-3 text-xl text-gray-600">
-              Ferramenta online gratuita para trabalhar com arquivos PDF
+              Ferramenta online gratuita para predizer seu exame de AVC por tomografia computadorizada
             </p>
           </div>
           
@@ -33,7 +33,7 @@ const Index = () => {
                 </div>
                 <h4 className="mt-4 text-lg font-medium text-gray-700">Selecione arquivos</h4>
                 <p className="mt-2 text-gray-600 text-sm">
-                  Selecione os arquivos do seu dispositivo ou arraste e solte-os na área de upload.
+                  Selecione os arquivos de sua tomografia computadorizada do seu dispositivo ou arraste e solte-os na área de upload.
                 </p>
               </div>
               
@@ -43,7 +43,7 @@ const Index = () => {
                 </div>
                 <h4 className="mt-4 text-lg font-medium text-gray-700">Processar arquivos</h4>
                 <p className="mt-2 text-gray-600 text-sm">
-                  Clique em processar para iniciar a conversão ou manipulação dos seus arquivos PDF.
+                  Clique em processar para iniciar a predição do seus exames selecionados.
                 </p>
               </div>
               

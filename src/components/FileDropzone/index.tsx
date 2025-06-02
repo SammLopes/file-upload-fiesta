@@ -1,23 +1,29 @@
 
-import React, { useState, useCallback } from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import { useToast } from '@/hooks/use-toast';
 import LoadingIndicator from '../LoadingIndicator';
 import DropArea from './DropArea';
 import FileList from './FileList';
 import ImagePreview from './ImagePreview';
 import { Button } from '../ui/button';
-
+import axios from 'axios';
+import {enviroments} from "@/enviroments.ts";
+import ProcessedFileList from "@/components/FileDropzone/ProcessedFileList.tsx";
+import {ImageProcessedList} from "@/components/FileDropzone/ProcessedFileList.tsx";
 interface FileWithPreview extends File {
   preview?: string;
 }
 
 const FileDropzone = () => {
+
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [processedImage, setProcessedImage] = useState<string | null>(null);
+  const [processedImages, setProcessedImage] = useState<string[]>([]);
   const { toast } = useToast();
+  const [imageList, setImageList] = useState<ImageProcessedList[]>([]);
+  const urlPredict = `${enviroments.urlApiLocal}/predict`;
 
   const onDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -61,12 +67,21 @@ const FileDropzone = () => {
     });
   };
 
-  const removeFile = (index: number) => {
-    setFiles(prevFiles => {
-      const updatedFiles = [...prevFiles];
-      updatedFiles.splice(index, 1);
-      return updatedFiles;
-    });
+  const removeFile = (index: number, isProcessed: boolean) => {
+    if (isProcessed) {
+      setImageList(prevFiles => {
+        const updatedFiles = [...prevFiles];
+        updatedFiles.splice(index, 1);
+        return updatedFiles;
+      });
+    }
+    if (!isProcessed) {
+      setFiles(prevFiles => {
+        const updatedFiles = [...prevFiles];
+        updatedFiles.splice(index, 1);
+        return updatedFiles;
+      });
+    }
     
     toast({
       title: "Arquivo removido",
@@ -79,24 +94,29 @@ const FileDropzone = () => {
     setFiles([]);
   };
 
-  const downloadImage = () => {
-    if (!processedImage) return;
-    
-    // Criar um link de download para a imagem
+  const downloadImage = async (imageUrl: string, filename: string) => {
+
+    const response = await fetch(imageUrl, {mode: 'cors'});
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+
     const link = document.createElement('a');
-    link.href = processedImage;
-    link.download = 'documento-processado.png';
+    link.href = url;
+    link.download = filename;
+    link.target = '_blank';
+    link.style.display = 'none';
+
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+    window.URL.revokeObjectURL(url);
     toast({
       title: "Download iniciado",
       description: "O download da imagem foi iniciado com sucesso."
     });
   };
 
-  const processFiles = () => {
+  const processFiles = async () => {
     if (files.length === 0) {
       toast({
         title: "Nenhum arquivo",
@@ -106,61 +126,97 @@ const FileDropzone = () => {
       return;
     }
 
-    // Mostrar o indicador de carregamento
     setIsProcessing(true);
     setProgress(0);
     setProcessedImage(null);
-    
+
     toast({
       title: "Processando arquivos",
       description: `Processando ${files.length} arquivo(s)...`,
     });
-    
-    // Simulação de processamento com progresso
-    const totalFiles = files.length;
-    let processedFiles = 0;
-    
-    // Simulação de processamento de arquivos com intervalos
-    const processInterval = setInterval(() => {
-      processedFiles += 1;
-      const newProgress = Math.round((processedFiles / totalFiles) * 100);
-      setProgress(newProgress);
-      
-      // Quando todos os arquivos forem processados
-      if (processedFiles >= totalFiles) {
-        clearInterval(processInterval);
-        
-        // Adicionar um pequeno atraso antes de concluir para mostrar 100%
-        setTimeout(() => {
-          setIsProcessing(false);
-          
-          // Simulação de imagem processada (usando uma imagem placeholder)
-          setProcessedImage('https://via.placeholder.com/600x800.png?text=PDF+Processado');
-          
+
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append("file", file);
+    });
+
+    try {
+
+      const response = await axios.post(urlPredict, formData, {
+        headers: {
+          'Content-Type':'multipart/form-data',
+        },
+        onUploadProgress: ( progressEvent ) => {
+          const percent = Math.round( (progressEvent.loaded * 100) / ( progressEvent.total|| 1) )
+          setProgress(percent);
+        }
+      }).then(response => {
+          const data =  response.data;
+
+          const urls = data.map( item => `${enviroments.urlApiLocal}${item.img_bytes}`);
+          setProcessedImage( urls );
+          const listImages: ImageProcessedList[] = data.map( item => {
+              return {
+                filename: item.filename,
+                img_bytes: item.img_bytes,
+                image_url: `${enviroments.urlApiLocal}${item.img_bytes}`,
+                bytes: item.size_bytes,
+              }
+          });
+          console.log("Resposta ", response);
+          setImageList(listImages);
+
           toast({
             title: "Processamento concluído",
-            description: `${totalFiles} arquivo(s) processado(s) com sucesso.`
+            description: `${files.length} arquivo(s) processado(s) com sucesso.`,
           });
-        }, 500);
-      }
-    }, 1000); // Processa um arquivo a cada segundo (simulação)
-    
-    // Em um cenário real, aqui seria implementada a lógica real de processamento
-    console.log("Arquivos para processar:", files);
-  };
 
-  // Renderização para imagem processada
-  if (processedImage) {
+      }).catch(error => {
+        console.log(error);
+      });
+
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: (error as Error).message,
+        variant: 'destructive'
+      })
+    } finally {
+      setIsProcessing(false);
+      setProgress(100)
+    }
+  }
+
+  const verImage = (imageUrl: string) => {
+    window.open(imageUrl, '_blank');
+  }
+
+  useEffect(()=>{
+    if(imageList.length === 0){
+      resetProcess()
+    }
+  }, [imageList]);
+
+  if (( processedImages ?? []).length > 0) {
     return (
-      <ImagePreview
-        imageUrl={processedImage}
-        downloadImage={downloadImage}
-        resetProcess={resetProcess}
-      />
+        <div className="container mx-auto px-4 py-6">
+            <ProcessedFileList
+              files={imageList}
+              resetProcess={resetProcess}
+              downloadImage={downloadImage}
+              removeFile={removeFile}
+              verImage={verImage}
+            />
+            <div className=" flex justify-end mt-3">
+              <Button onClick={resetProcess} variant="outline">
+                Processar novos arquivos
+              </Button>
+            </div>
+
+        </div>
     );
   }
 
-  // Renderização condicional baseada no estado de processamento
   if (isProcessing) {
     return (
       <div className="container mx-auto px-4 py-6">

@@ -4,6 +4,8 @@ import Header from '../components/Header';
 import FileDropzone from '../components/FileDropzone';
 import Footer from '../components/Footer';
 
+import ErrorBoundary from '../components/ErrorBoundary';
+
 const Index = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -18,7 +20,10 @@ const Index = () => {
           </div>
           
           <div className="max-w-4xl mx-auto">
-            <FileDropzone />
+            <ErrorBoundary>
+              <FileDropzone />
+            </ErrorBoundary>
+
           </div>
           
           <div className="mt-16 max-w-4xl mx-auto">

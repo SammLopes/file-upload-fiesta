@@ -23,7 +23,7 @@ const LoadingIndicator = ({
       
       {showProgress && (
         <div className="w-full max-w-xs">
-          <Progress value={progress} className="h-2 bg-gray-200" />
+          <Progress value={progress} className="h-2 bg-blue-200" />
           <p className="text-sm text-gray-500 text-center mt-2">{progress}%</p>
         </div>
       )}

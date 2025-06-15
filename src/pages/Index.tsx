@@ -23,7 +23,6 @@ const Index = () => {
             <ErrorBoundary>
               <FileDropzone />
             </ErrorBoundary>
-
           </div>
           
           <div className="mt-16 max-w-4xl mx-auto">

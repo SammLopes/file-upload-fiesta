@@ -4,7 +4,6 @@ import { useToast } from '@/hooks/use-toast';
 import LoadingIndicator from '../LoadingIndicator';
 import DropArea from './DropArea';
 import FileList from './FileList';
-import ImagePreview from './ImagePreview';
 import { Button } from '../ui/button';
 import axios from 'axios';
 import {enviroments} from "@/enviroments.ts";
@@ -24,6 +23,8 @@ const FileDropzone = () => {
   const { toast } = useToast();
   const [imageList, setImageList] = useState<ImageProcessedList[]>([]);
   const urlPredict = `${enviroments.urlApiLocal}/predict`;
+  const urlStatus = `${enviroments.urlApiLocal}/status`;
+  const urlCleanup = `${enviroments.urlApiLocal}/cleanup`;
 
   const onDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -52,18 +53,23 @@ const FileDropzone = () => {
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files) as FileWithPreview[];
+      if( ( files.length + newFiles.length ) > 5 || newFiles.length > 5 ) {
+        return toast({
+            title: "Atenção",
+            description: "Você está enviando mais de 5 arquivos, o que não é permitido.",
+            variant: "destructive"
+        })
+      }
       handleFiles(newFiles);
     }
   };
 
   const handleFiles = (newFiles: FileWithPreview[]) => {
-    setFiles(prevFiles => {
-      const updatedFiles = [...prevFiles, ...newFiles];
-      toast({
-        title: "Arquivos adicionados",
-        description: `${newFiles.length} arquivo(s) adicionado(s) com sucesso.`,
-      });
-      return updatedFiles;
+    const updatedFiles = [...files, ...newFiles];
+    setFiles(updatedFiles);
+    toast({
+      title: "Arquivos adicionados",
+      description: `${newFiles.length} arquivo(s) adicionado(s) com sucesso.`,
     });
   };
 
@@ -116,11 +122,41 @@ const FileDropzone = () => {
     });
   };
 
+  const cleanup = async () => {
+    try {
+      await axios.post(urlCleanup);
+      console.log("Limpeza de arquivos temporários concluída.");
+    } catch (error) {
+      console.error("Erro ao limpar arquivos temporários:", error);
+    }
+  };
+
+  const status = async () => {
+    try {
+      const response = await axios.get(urlStatus);
+      console.log("Status dos arquivos:", response.data);
+      const quantityFiles = response.data.total_arquivos
+      return quantityFiles > 10;
+    } catch (error) {
+      console.error("Erro ao obter status dos arquivos:", error);
+      return false;
+    }
+  }
+
   const processFiles = async () => {
     if (files.length === 0) {
       toast({
         title: "Nenhum arquivo",
         description: "Por favor, adicione pelo menos um arquivo para processar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if ( files.length > 5 ){
+      toast({
+        title:"Atenção",
+        description: "Você está enviando mais de 5 arquivos, o que não é premitido.",
         variant: "destructive"
       });
       return;
@@ -141,6 +177,10 @@ const FileDropzone = () => {
     });
 
     try {
+      const cleaningFiles = await status();
+      if( cleaningFiles ) {
+        await cleanup();
+      }
 
       const response = await axios.post(urlPredict, formData, {
         headers: {
@@ -197,7 +237,7 @@ const FileDropzone = () => {
     }
   }, [imageList]);
 
-  if (( processedImages ?? []).length > 0) {
+  if (( processedImages ?? []).length > 0 ) {
     return (
         <div className="container mx-auto px-4 py-6">
             <ProcessedFileList
@@ -240,12 +280,12 @@ const FileDropzone = () => {
         onDrop={onDrop}
         handleFileInput={handleFileInput}
       />
-      
+
       <FileList
         files={files}
         removeFile={removeFile}
       />
-      
+
       {files.length > 0 && (
         <div className="mt-6 flex justify-center">
           <Button
